@@ -8,7 +8,7 @@
 namespace {
 
 
-TEST(basic_graph_main, CreateGrap) {
+TEST(basic_graph_main, CreateGraph) {
 }
 
 TEST(basic_graph_main, DestroyGraph) {
