@@ -77,12 +77,12 @@ static double PYTHAG(double a, double b)
     return(result);
 }
 
-int dsvd(float **a, int m, int n, float *w, float **v)
+int dsvd(float *a, int m, int n, float *w, float *v, float *temp)
 {
     int flag, i, its, j, jj, k, l, nm;
     double c, f, h, s, x, y, z;
     double anorm = 0.0, g = 0.0, scale = 0.0;
-    double *rv1;
+ 
   
     if (m < n) 
     {
@@ -90,43 +90,43 @@ int dsvd(float **a, int m, int n, float *w, float **v)
         return(0);
     }
   
-    rv1 = (double *)malloc((unsigned int) n*sizeof(double));
+
 
 /* Householder reduction to bidiagonal form */
     for (i = 0; i < n; i++) 
     {
         /* left-hand reduction */
         l = i + 1;
-        rv1[i] = scale * g;
+        temp[i] = scale * g;
         g = s = scale = 0.0;
         if (i < m) 
         {
             for (k = i; k < m; k++) 
-                scale += fabs((double)a[k][i]);
+                scale += fabs((double)a[k * n + i]);
             if (scale) 
             {
                 for (k = i; k < m; k++) 
                 {
-                    a[k][i] = (float)((double)a[k][i]/scale);
-                    s += ((double)a[k][i] * (double)a[k][i]);
+                    a[k * n + i] = (float)((double)a[k * n + i]/scale);
+                    s += ((double)a[k * n + i] * (double)a[k * n + i]);
                 }
-                f = (double)a[i][i];
+                f = (double)a[i * n + i];
                 g = -SIGN(sqrt(s), f);
                 h = f * g - s;
-                a[i][i] = (float)(f - g);
+                a[i* n + i] = (float)(f - g);
                 if (i != n - 1) 
                 {
                     for (j = l; j < n; j++) 
                     {
                         for (s = 0.0, k = i; k < m; k++) 
-                            s += ((double)a[k][i] * (double)a[k][j]);
+                            s += ((double)a[k * n + i] * (double)a[k * n + j]);
                         f = s / h;
                         for (k = i; k < m; k++) 
-                            a[k][j] += (float)(f * (double)a[k][i]);
+                            a[k * n + j] += (float)(f * (double)a[k * n + i]);
                     }
                 }
                 for (k = i; k < m; k++) 
-                    a[k][i] = (float)((double)a[k][i]*scale);
+                    a[k * n + i] = (float)((double)a[k * n + i]*scale);
             }
         }
         w[i] = (float)(scale * g);
@@ -136,35 +136,35 @@ int dsvd(float **a, int m, int n, float *w, float **v)
         if (i < m && i != n - 1) 
         {
             for (k = l; k < n; k++) 
-                scale += fabs((double)a[i][k]);
+                scale += fabs((double)a[i * n + k]);
             if (scale) 
             {
                 for (k = l; k < n; k++) 
                 {
-                    a[i][k] = (float)((double)a[i][k]/scale);
-                    s += ((double)a[i][k] * (double)a[i][k]);
+                    a[i * n + k] = (float)((double)a[i * n + k]/scale);
+                    s += ((double)a[i * n + k] * (double)a[i * n + k]);
                 }
-                f = (double)a[i][l];
+                f = (double)a[i * n + l];
                 g = -SIGN(sqrt(s), f);
                 h = f * g - s;
-                a[i][l] = (float)(f - g);
+                a[i * n + l] = (float)(f - g);
                 for (k = l; k < n; k++) 
-                    rv1[k] = (double)a[i][k] / h;
+                    temp[k] = (double)a[i * n + k] / h;
                 if (i != m - 1) 
                 {
                     for (j = l; j < m; j++) 
                     {
                         for (s = 0.0, k = l; k < n; k++) 
-                            s += ((double)a[j][k] * (double)a[i][k]);
+                            s += ((double)a[j * n + k] * (double)a[i * n + k]);
                         for (k = l; k < n; k++) 
-                            a[j][k] += (float)(s * rv1[k]);
+                            a[j * n + k] += (float)(s * temp[k]);
                     }
                 }
                 for (k = l; k < n; k++) 
-                    a[i][k] = (float)((double)a[i][k]*scale);
+                    a[i * n +  k] = (float)((double)a[i * n + k]*scale);
             }
         }
-        anorm = MAX(anorm, (fabs((double)w[i]) + fabs(rv1[i])));
+        anorm = MAX(anorm, (fabs((double)w[i]) + fabs(temp[i])));
     }
   
     /* accumulate the right-hand transformation */
@@ -175,21 +175,21 @@ int dsvd(float **a, int m, int n, float *w, float **v)
             if (g) 
             {
                 for (j = l; j < n; j++)
-                    v[j][i] = (float)(((double)a[i][j] / (double)a[i][l]) / g);
+                    v[j * n + i] = (float)(((double)a[i * n + j] / (double)a[i * n + l]) / g);
                     /* double division to avoid underflow */
                 for (j = l; j < n; j++) 
                 {
                     for (s = 0.0, k = l; k < n; k++) 
-                        s += ((double)a[i][k] * (double)v[k][j]);
+                        s += ((double)a[i * n + k] * (double)v[k * n + j]);
                     for (k = l; k < n; k++) 
-                        v[k][j] += (float)(s * (double)v[k][i]);
+                        v[k * n + j] += (float)(s * (double)v[k * n + i]);
                 }
             }
             for (j = l; j < n; j++) 
-                v[i][j] = v[j][i] = 0.0;
+                v[i * n + j] = v[j * n + i] = 0.0;
         }
-        v[i][i] = 1.0;
-        g = rv1[i];
+        v[i * n + i] = 1.0;
+        g = temp[i];
         l = i;
     }
   
@@ -200,7 +200,7 @@ int dsvd(float **a, int m, int n, float *w, float **v)
         g = (double)w[i];
         if (i < n - 1) 
             for (j = l; j < n; j++) 
-                a[i][j] = 0.0;
+                a[i * n  + j] = 0.0;
         if (g) 
         {
             g = 1.0 / g;
@@ -209,33 +209,33 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                 for (j = l; j < n; j++) 
                 {
                     for (s = 0.0, k = l; k < m; k++) 
-                        s += ((double)a[k][i] * (double)a[k][j]);
-                    f = (s / (double)a[i][i]) * g;
+                        s += ((double)a[k * n + i] * (double)a[k * n + j]);
+                    f = (s / (double)a[i * n + i]) * g;
                     for (k = i; k < m; k++) 
-                        a[k][j] += (float)(f * (double)a[k][i]);
+                        a[k * n + j] += (float)(f * (double)a[k * n + i]);
                 }
             }
             for (j = i; j < m; j++) 
-                a[j][i] = (float)((double)a[j][i]*g);
+                a[j * n + i] = (float)((double)a[j * n + i]*g);
         }
         else 
         {
             for (j = i; j < m; j++) 
-                a[j][i] = 0.0;
+                a[j * n + i] = 0.0;
         }
-        ++a[i][i];
+        ++a[i * n + i];
     }
 
     /* diagonalize the bidiagonal form */
     for (k = n - 1; k >= 0; k--) 
     {                             /* loop over singular values */
-        for (its = 0; its < 30; its++) 
+        for (its = 0; its < 10; its++) 
         {                         /* loop over allowed iterations */
             flag = 1;
             for (l = k; l >= 0; l--) 
             {                     /* test for splitting */
                 nm = l - 1;
-                if (fabs(rv1[l]) + anorm == anorm) 
+                if (fabs(temp[l]) + anorm == anorm) 
                 {
                     flag = 0;
                     break;
@@ -249,7 +249,7 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                 s = 1.0;
                 for (i = l; i <= k; i++) 
                 {
-                    f = s * rv1[i];
+                    f = s * temp[i];
                     if (fabs(f) + anorm != anorm) 
                     {
                         g = (double)w[i];
@@ -260,10 +260,10 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                         s = (- f * h);
                         for (j = 0; j < m; j++) 
                         {
-                            y = (double)a[j][nm];
-                            z = (double)a[j][i];
-                            a[j][nm] = (float)(y * c + z * s);
-                            a[j][i] = (float)(z * c - y * s);
+                            y = (double)a[j * n + nm];
+                            z = (double)a[j * n + i];
+                            a[j * n + nm] = (float)(y * c + z * s);
+                            a[j * n + i] = (float)(z * c - y * s);
                         }
                     }
                 }
@@ -275,12 +275,12 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                 {              /* make singular value nonnegative */
                     w[k] = (float)(-z);
                     for (j = 0; j < n; j++) 
-                        v[j][k] = (-v[j][k]);
+                        v[j * n + k] = (-v[j * n + k]);
                 }
                 break;
             }
             if (its >= 30) {
-                free((void*) rv1);
+                
                 fprintf(stderr, "No convergence after 30,000! iterations \n");
                 return(0);
             }
@@ -289,8 +289,8 @@ int dsvd(float **a, int m, int n, float *w, float **v)
             x = (double)w[l];
             nm = k - 1;
             y = (double)w[nm];
-            g = rv1[nm];
-            h = rv1[k];
+            g = temp[nm];
+            h = temp[k];
             f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
             g = PYTHAG(f, 1.0);
             f = ((x - z) * (x + z) + h * ((y / (f + SIGN(g, f))) - h)) / x;
@@ -300,12 +300,12 @@ int dsvd(float **a, int m, int n, float *w, float **v)
             for (j = l; j <= nm; j++) 
             {
                 i = j + 1;
-                g = rv1[i];
+                g = temp[i];
                 y = (double)w[i];
                 h = s * g;
                 g = c * g;
                 z = PYTHAG(f, h);
-                rv1[j] = z;
+                temp[j] = z;
                 c = f / z;
                 s = h / z;
                 f = x * c + g * s;
@@ -314,10 +314,10 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                 y = y * c;
                 for (jj = 0; jj < n; jj++) 
                 {
-                    x = (double)v[jj][j];
-                    z = (double)v[jj][i];
-                    v[jj][j] = (float)(x * c + z * s);
-                    v[jj][i] = (float)(z * c - x * s);
+                    x = (double)v[jj * n + j];
+                    z = (double)v[jj * n + i];
+                    v[jj * n + j] = (float)(x * c + z * s);
+                    v[jj * n + i] = (float)(z * c - x * s);
                 }
                 z = PYTHAG(f, h);
                 w[j] = (float)z;
@@ -331,55 +331,34 @@ int dsvd(float **a, int m, int n, float *w, float **v)
                 x = (c * y) - (s * g);
                 for (jj = 0; jj < m; jj++) 
                 {
-                    y = (double)a[jj][j];
-                    z = (double)a[jj][i];
-                    a[jj][j] = (float)(y * c + z * s);
-                    a[jj][i] = (float)(z * c - y * s);
+                    y = (double)a[jj * n + j];
+                    z = (double)a[jj * n + i];
+                    a[jj * n + j] = (float)(y * c + z * s);
+                    a[jj * n + i] = (float)(z * c - y * s);
                 }
             }
-            rv1[l] = 0.0;
-            rv1[k] = f;
+            temp[l] = 0.0;
+            temp[k] = f;
             w[k] = (float)x;
         }
     }
-    free((void*) rv1);
+  
     return (1);
 }
 
 int main()
 {
 	// dynamically create array of pointers of size M
-	float **A = new float* [4];
-	float** V = new float* [4];
+	float A[16] = {5, 5, 8, -1, 7, 9, 2, 3, 4, 1, 2, 3 };
 
-	// dynamically allocate memory of size N for each row
-	for (int i = 0; i < 4; i++)
-		A[i] = new float[3];
-
-	// dynamically allocate memory of size N for each row
-	for (int i = 0; i < 4; i++)
-		V[i] = new float[3];
-
-	A[0][0] = 5 ;
-	A[0][1] = 5 ;
-	A[0][2] = 8 ;
-	A[1][0] = -1;
-	A[1][1] = 7 ;
-	A[1][2] = 9;
-	A[2][0] = 2 ;
-	A[2][1] = 3 ;
-	A[2][2] = 4 ;
-	A[3][0] = 1;
-	A[3][1] = 2;
-	A[3][2] = 3;
 	
 
 	float s[12] = { 0 };
-	float v[4][4] = { 0 };
+	float v[16] = { 0 };
+	float temp[16] = { 0 };
 
-	dsvd(A, 4, 3, s, V);
+	dsvd(A, 4, 3, s, v, temp);
 
-	delete[] A;
-	delete[] V;
+
 	return 0;
 }
