@@ -33,7 +33,7 @@ Features:
 
 # License 
 
-MIT
+GPL
 
 # Use-case
 
