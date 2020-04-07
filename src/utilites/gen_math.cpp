@@ -47,5 +47,21 @@ int32_t division(int32_t num, int32_t denom)
     s32_shift = clear_bits(denom) + 1;
     u32_norm = u32_denom << s32_shift;
 
+    if ((u32_norm >> 25) != 0)
+        u32_init_estim = udivTable[(u32_norm >> 25) - 64];
+    else
+        u32_init_estim udivTable[0];
     
+    s32_shift -= 7;
+    s32_den_temp = u32_denom;
+    s32_den_temp = -s32_den_temp;
+
+    int16_t s16_temp;
+    u32_denom  = u32_init_estim << s32_shift;
+
+    u32_init_estim = u32_denom * ( s32_den_temp);
+
+    
+
+
 }
