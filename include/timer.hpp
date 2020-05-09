@@ -9,23 +9,21 @@ typedef LARGE_INTEGER timeval;
 #include <sys/time.h>
 #endif
 
-
 namespace mordor {
 
 class mordorTimer {
- public:
+public:
   mordorTimer() {}
   ~mordorTimer() {}
   void init();
   void destoy();
   int64_t get_time_in_ms();
 
- private:
+private:
   timeval tv_start;
   timeval tv_end;
 };
 
 typedef mordorTimer Timer;
 
-}  // namespace mordor
-
+} // namespace mordor

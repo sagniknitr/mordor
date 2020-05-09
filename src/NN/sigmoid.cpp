@@ -2,16 +2,11 @@
 #define SGN(x) ((x < 0) ? 127 : 0)
 #define ABS(x) ((x < 0) ? (-x) : x)
 
+#define LUTMAX 8
+#define LUTPRECISION 8
+#define LUTLEN (LUTMAX * LUTPRECISION + 1)
 
-
-#define LUTMAX 8  
-#define LUTPRECISION 8  
-#define LUTLEN (LUTMAX * LUTPRECISION + 1)  
-
-int mordor_sigmoid(int8_t in[],
-                   uint8_t out[],
-                   int w,
-                   int in_fl_)
+int mordor_sigmoid(int8_t in[], uint8_t out[], int w, int in_fl_)
 
 {
   int idx, x;
@@ -22,7 +17,7 @@ int mordor_sigmoid(int8_t in[],
 
   int8_t y;
 
-  uint8_t* lut8b = lut8b3;
+  uint8_t *lut8b = lut8b3;
 
   for (int i = 0; i < w; i++) {
     abs_in = ABS(in[i]);

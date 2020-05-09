@@ -1,20 +1,12 @@
 #include "utils.h"
 
-
-
 #include <cinttypes>
 #include <cstddef>
 
 namespace draco {
-void mordorTimer::Start() {
+void mordorTimer::Start() { gettimeofday(&tv_start, NULL); }
 
-  gettimeofday(&tv_start, NULL);
-}
-
-void mordorTimer::Stop() {
-
-  gettimeofday(&tv_end, NULL);
-}
+void mordorTimer::Stop() { gettimeofday(&tv_end, NULL); }
 
 int64_t mordorTimer::GetInMs() {
 
@@ -23,4 +15,4 @@ int64_t mordorTimer::GetInMs() {
   return seconds + milliseconds;
 }
 
-}  // namespace draco
+} // namespace draco

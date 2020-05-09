@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class KDTree{
+class KDTree {
 public:
-	void testKDTree();
+  void testKDTree();
 };
